@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <head>
-  <title>OpenAI Quickstart</title>
+  <title>PPt Generator</title>
   <link
     rel="shortcut icon"
     href="{{ url_for('static', filename='dog.png') }}"
@@ -10,12 +10,47 @@
 
 <body>
   <img src="{{ url_for('static', filename='dog.png') }}" class="icon" />
-  <h3>Name my pet</h3>
+  <h3>Enter the title</h3>
   <form action="/" method="post">
-    <input type="text" name="animal" placeholder="Enter an animal" required />
-    <input type="submit" value="Generate names" />
+    <input type="text" name="animal" placeholder="Enter title" required />
+    <input type="submit" value="Generate PPT" />
   </form>
   {% if result %}
-  <div class="result">{{ result }}</div>
+  <div class="result">
+    <h2>{{ result.slide_1.title}}</h2>
+    <p>{{result.slide_1.content}}</p>
+  </div>
+  <div class="result">
+    <h2>{{ result.slide_2.title}}</h2>
+    <p>{{result.slide_2.content}}</p>
+  </div>
+  <div class="result">
+    <h2>{{ result.slide_3.title}}</h2>
+    <p>{{result.slide_2.content}}</p>
+  </div>
+  <div class="result">
+    <h2>{{ result.slide_3.title}}</h2>
+    <p>{{result.slide_3.content}}</p>
+  </div>
+  <div class="result">
+    <h2>{{ result.slide_4.title}}</h2>
+    <p>{{result.slide_4.content}}</p>
+  </div>
+  <div class="result">
+    <h2>{{ result.slide_5.title}}</h2>
+    <p>{{result.slide_5.content}}</p>
+  </div>
+  <div class="result">
+    <h2>{{ result.slide_6.title}}</h2>
+    <p>{{result.slide_6.content}}</p>
+  </div>
+  <div class="result">
+    <h2>{{ result.slide_7.title}}</h2>
+    <p>{{result.slide_7.content}}</p>
+  </div>
+  <div class="result">
+    <h2>{{ result.slide_8.title}}</h2>
+    <p>{{result.slide_8.content}}</p>
+  </div>
   {% endif %}
 </body>
