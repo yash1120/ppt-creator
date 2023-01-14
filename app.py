@@ -1,28 +1,23 @@
 import os
 import openai
-from flask import Flask, redirect, render_template, request, url_for,session, jsonify,abort
+from flask import Flask, redirect, render_template, request, url_for, session, jsonify, abort
 import re
-from google.oauth2 import id_token
-from google_auth_oauthlib.flow import Flow
-from pip._vendor import cachecontrol
-import google.auth.transport.requests
-import requests
-import pathlib
-
+from flask_dance.contrib.google import make_google_blueprint, google
+from google.oauth2.credentials import Credentials
 
 app = Flask(__name__)
-app.secret_key = "<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>" # make sure this matches with that's in client_secret.json
+app.secret_key = "your secret key"
 
-os.environ["OAUTHLIB_INSECURE_TRANSPORT"] = "1" # to allow Http traffic for local dev
-
-GOOGLE_CLIENT_ID = "1066115487875-h22uq158e9f37d0uq23dgbmuacjockug.apps.googleusercontent.com"
-client_secrets_file = os.path.join(pathlib.Path(__file__).parent, "client_secret.json")
-
-flow = Flow.from_client_secrets_file(
-    client_secrets_file=client_secrets_file,
-    scopes=["https://www.googleapis.com/auth/userinfo.profile", "https://www.googleapis.com/auth/userinfo.email", "openid"],
-    redirect_uri="http://127.0.0.1:5000/callback"
+# create the blueprint for google auth
+google_bp = make_google_blueprint(
+    client_id=os.getenv("GOOGLE_CLIENT_ID"),
+    client_secret=os.getenv("GOOGLE_CLIENT_SECRET"),
+    scope=["openid", "email", "profile"],
+    redirect_url='http://127.0.0.1:5000/callback'
 )
+app.register_blueprint(google_bp, url_prefix="/login")
+
+# check if user is logged in
 
 
 def login_is_required(function):
@@ -34,47 +29,34 @@ def login_is_required(function):
     return wrapper
 
 
+@app.route("/")
+def index():
+    if not google.authorized:
+        return redirect(url_for("google.login"))
+    resp = google.get("/oauth2/v2/userinfo")
+    return jsonify(resp.json())
+
+
 @app.route("/login")
 def login():
-    authorization_url, state = flow.authorization_url()
-    session["state"] = state
-    return redirect(authorization_url)
+    return redirect(url_for("google.login"))
 
 
 @app.route("/callback")
 def callback():
-    flow.fetch_token(authorization_response=request.url)
+    google.authorized_response()
+    creds = Credentials.from_authorized_response(
+        google.authorized_response(), scopes=google_bp.scopes)
 
-    if not session["state"] == request.args["state"]:
-        abort(500)  # State does not match!
-
-    credentials = flow.credentials
-    request_session = requests.session()
-    cached_session = cachecontrol.CacheControl(request_session)
-    token_request = google.auth.transport.requests.Request(session=cached_session)
-
-    id_info = id_token.verify_oauth2_token(
-        id_token=credentials._id_token,
-        request=token_request,
-        audience=GOOGLE_CLIENT_ID
-    )
-
+    id_info = creds.id_token
     session["google_id"] = id_info.get("sub")
     session["name"] = id_info.get("name")
     return redirect("/input")
 
 
-@app.route("/logout")
-def logout():
-    session.clear()
-    return redirect("/")
 
 
-@app.route("/")
-def index():
-    return "Hello login ->> <a href='/login'><button>Login</button></a>"
-
-@app.route("/input", methods=["GET","POST"])
+@app.route("/input", methods=["GET", "POST"])
 @login_is_required
 def input():
     if request.method == "POST":
@@ -92,6 +74,7 @@ def input():
         return render_template("input.html", results=result)
 
     return render_template("input.html", results=None)
+
 
 @login_is_required
 @app.route("/content/<slide_title>", methods=["GET"])
@@ -122,6 +105,7 @@ def generate_list_title(title):
 
 def generate_contnet(slide_title):
     return f"""generate the paragraph on the topic {slide_title})"""
+
 
 if __name__ == "__main__":
     app.run(host='0.0.0.0', debug=True)
