@@ -14,5 +14,5 @@ build/
 *.egg-info/
 
 .DS_STORE
-
+.client_secret.json
 .env
