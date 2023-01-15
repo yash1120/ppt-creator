@@ -9,6 +9,10 @@
 </head>
 
 <body>
+    <h2>hello {{current_user.name}}</h2>
+    <h2>hello {{current_user.email}}</h2>
+    <h2><img src="{{current_user.profile_pic}}" alt=""> </h2>
+
   <img src="{{ url_for('static', filename='dog.png') }}" class="icon" />
   <h3>Enter the title</h3>
   <form action="/input" method="post">
